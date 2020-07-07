@@ -36,7 +36,9 @@ optional arguments:
                         Timestamp column name. Default: timestamp.
   -tf [TIMEFORMAT], --timeformat [TIMEFORMAT]
                         Timestamp format. Default: '%Y-%m-%d %H:%M:%S' e.g.:
-                        1970-01-01 00:00:00
+                        '1970-01-01 00:00:00'. To use posix datetime
+                        (seconds since 1 January 1970) set this argument
+                        to 'posix'.
   -tz TIMEZONE, --timezone TIMEZONE
                         Timezone of supplied data. Default: UTC
   --fieldcolumns [FIELDCOLUMNS]

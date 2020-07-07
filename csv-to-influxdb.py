@@ -45,8 +45,8 @@ def isinteger(value):
             return False
 
 
-def loadCsv(inputfilename, servername, user, password, dbname, metric, 
-    timecolumn, timeformat, tagcolumns, fieldcolumns, usegzip, 
+def loadCsv(inputfilename, servername, user, password, dbname, metric,
+    timecolumn, timeformat, tagcolumns, fieldcolumns, usegzip,
     delimiter, batchsize, create, datatimezone, usessl):
 
     host = servername[0:servername.rfind(':')]
@@ -74,7 +74,10 @@ def loadCsv(inputfilename, servername, user, password, dbname, metric,
     with inputfile as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delimiter)
         for row in reader:
-            datetime_naive = datetime.datetime.strptime(row[timecolumn],timeformat)
+            if timeformat.lower() == 'posix':
+                datetime_naive = datetime.datetime.fromtimestamp(int(row[timecolumn]))
+            else:
+                datetime_naive = datetime.datetime.strptime(row[timecolumn],timeformat)
 
             if datetime_naive.tzinfo is None:
                 datetime_local = timezone(datatimezone).localize(datetime_naive)
@@ -107,7 +110,7 @@ def loadCsv(inputfilename, servername, user, password, dbname, metric,
 
             datapoints.append(point)
             count+=1
-            
+
             if len(datapoints) % batchsize == 0:
                 print('Read %d lines'%count)
                 print('Inserting %d datapoints...'%(len(datapoints)))
@@ -120,7 +123,7 @@ def loadCsv(inputfilename, servername, user, password, dbname, metric,
                 print("Wrote %d points, up to %s, response: %s" % (len(datapoints), datetime_local, response))
 
                 datapoints = []
-            
+
 
     # write rest
     if len(datapoints) > 0:
@@ -135,7 +138,7 @@ def loadCsv(inputfilename, servername, user, password, dbname, metric,
         print("Wrote %d, response: %s" % (len(datapoints), response))
 
     print('Done')
-    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Csv to influxdb.')
 
@@ -170,7 +173,10 @@ if __name__ == "__main__":
                         help='Timestamp column name. Default: timestamp.')
 
     parser.add_argument('-tf', '--timeformat', nargs='?', default='%Y-%m-%d %H:%M:%S',
-                        help='Timestamp format. Default: \'%%Y-%%m-%%d %%H:%%M:%%S\' e.g.: 1970-01-01 00:00:00')
+                        help=(
+                            'Timestamp format. '
+                            'Default: \'%%Y-%%m-%%d %%H:%%M:%%S\' e.g.: \'1970-01-01 00:00:00\'.'
+                            'To use posix datetime (seconds since 1 January 1970) set this argument to \'posix\'.'))
 
     parser.add_argument('-tz', '--timezone', default='UTC',
                         help='Timezone of supplied data. Default: UTC')
@@ -188,7 +194,7 @@ if __name__ == "__main__":
                         help='Batch size. Default: 5000.')
 
     args = parser.parse_args()
-    loadCsv(args.input, args.server, args.user, args.password, args.dbname, 
-        args.metricname, args.timecolumn, args.timeformat, args.tagcolumns, 
-        args.fieldcolumns, args.gzip, args.delimiter, args.batchsize, args.create, 
+    loadCsv(args.input, args.server, args.user, args.password, args.dbname,
+        args.metricname, args.timecolumn, args.timeformat, args.tagcolumns,
+        args.fieldcolumns, args.gzip, args.delimiter, args.batchsize, args.create,
         args.timezone, args.ssl)
